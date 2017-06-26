@@ -3,5 +3,8 @@
 
     <string name="app_name">Timer</string>
     <string name="hello_world">Hello world!</string>
+    <string name="accent">Accent</string>
+
+    <string name="primary">Primary</string>
 
 </resources>
