@@ -3,7 +3,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-    <com.hanks.htextview.evaporate.EvaporateTextView
+    <com.hanks.htextview.HTextView
         android:id="@+id/tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

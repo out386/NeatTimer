@@ -1,5 +1,6 @@
 package gh.out386.timer;
 
+import android.animation.Animator;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -10,129 +11,242 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.RelativeLayout;
 
 import com.afollestad.materialdialogs.color.ColorChooserDialog;
-import com.hanks.htextview.evaporate.EvaporateTextView;
+import com.hanks.htextview.HTextView;
+import com.hanks.htextview.HTextViewType;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 
-public class MainActivity extends AppCompatActivity implements ColorChooserDialog.ColorCallback {
-    private EvaporateTextView tv;
-    private Timer timer;
+public class MainActivity extends AppCompatActivity implements ColorChooserDialog.ColorCallback, View.OnClickListener {
+    private final int INTERVAL = 205;
+    private final int BLINK_INTERVAL = 1000;
+
+    private HTextView tv;
+    private ScheduledFuture<?> timeHandle;
     private long initialTime;
+    private long diff;
     private int colourPrimary;
     private int colourAccent;
     private SharedPreferences sp;
+    private SimpleDateFormat sdf;
+    private Date date;
+    private int timerLength = -1;
+    private boolean isPaused = true;
+    private String formattedDiff;
+    private ScheduledExecutorService scheduledExecutorService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         sp = getPreferences(Context.MODE_PRIVATE);
-        RelativeLayout container = (RelativeLayout) findViewById(R.id.rl);
-        tv = (EvaporateTextView) findViewById(R.id.tv);
-        final int[] timerLength = {-1};
+        scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
+        sdf = new SimpleDateFormat("ss:SS");
+        date = new Date();
+        tv = (HTextView) findViewById(R.id.tv);
+        RelativeLayout container = (RelativeLayout) findViewById(R.id.rl);
+
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        tv.animateText(getResources().getString(R.string.timer_initial_text));
 
         if (savedInstanceState == null) {
-            initialTime = SystemClock.elapsedRealtime();
-            colourPrimary = sp.getInt(Constants.colourPrimary, 0xffffff);
-            colourAccent = sp.getInt(Constants.colourAccent, 0x000000);
+            colourPrimary = sp.getInt(Constants.COLOUR_PRIMARY, 0xffffff);
+            colourAccent = sp.getInt(Constants.COLOUR_ACCENT, 0x000000);
+            diff = 0;
+            formattedDiff = "00:00";
+            timeHandle = scheduledExecutorService
+                    .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
         } else {
-            initialTime = savedInstanceState.getLong(Constants.initialTime);
-            colourPrimary = savedInstanceState.getInt(Constants.colourPrimary);
-            colourAccent = savedInstanceState.getInt(Constants.colourAccent);
+            initialTime = savedInstanceState.getLong(Constants.INITIAL_TIME);
+            colourPrimary = savedInstanceState.getInt(Constants.COLOUR_PRIMARY);
+            colourAccent = savedInstanceState.getInt(Constants.COLOUR_ACCENT);
+            isPaused = savedInstanceState.getBoolean(Constants.IS_PAUSED);
+            diff = savedInstanceState.getLong(Constants.DIFF);
+            if (isPaused) {
+                formattedDiff = savedInstanceState.getString(Constants.FORMATTED_DIFF);
+                tv.animateText(formattedDiff);
+                timeHandle = scheduledExecutorService
+                        .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
+            } else
+                timeHandle = scheduledExecutorService
+                        .scheduleAtFixedRate(new StopTimerRunnable(), 0, INTERVAL, TimeUnit.MILLISECONDS);
         }
 
         container.setBackgroundColor(colourPrimary);
         tv.setTextColor(colourAccent);
         tv.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
+        tv.setAnimateType(HTextViewType.EVAPORATE);
+        tv.setOnClickListener(this);
+        container.setOnClickListener(this);
 
         container.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                new ColorChooserDialog.Builder(MainActivity.this, R.string.accent)
+                new ColorChooserDialog.Builder(MainActivity.this, R.string.primary)
                         .accentMode(true)
                         .show();
                 return true;
             }
         });
 
-
-        final SimpleDateFormat sdf = new SimpleDateFormat("ss:SS");
-        final Date date = new Date();
-        timer = new Timer();
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-        timer.scheduleAtFixedRate(new TimerTask() {
+        tv.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void run() {
-                final long diff = SystemClock.elapsedRealtime() - initialTime;
-                if (timerLength[0] == -1 && diff > 50000)
-                    timerLength[0] = 1;
-                else if (timerLength[0] != 0 && diff > 2750000)
-                    timerLength[0] = 2;
-
-                if (timerLength[0] == 1) {
-                    sdf.applyPattern("mm:ss:SS");
-                    timerLength[0] = -2;
-                } else if (timerLength[0] == 2) {
-                    sdf.applyPattern("HH:mm:ss");
-                    timerLength[0] = 0;
-                }
-                date.setTime(diff);
-
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        tv.animateText(sdf.format(date));
-                    }
-                });
+            public boolean onLongClick(View v) {
+                diff = 0L;
+                formattedDiff = "00:00";
+                isPaused = true;
+                tv.animateText(formattedDiff);
+                if (timeHandle != null && !timeHandle.isCancelled())
+                    timeHandle.cancel(true);
+                timeHandle = scheduledExecutorService
+                        .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
+                return true;
             }
-        }, 205, 205);
+        });
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (isPaused) {
+            if (timeHandle == null) {
+                initialTime = SystemClock.elapsedRealtime();
+                timeHandle = scheduledExecutorService
+                        .scheduleAtFixedRate(new StopTimerRunnable(), 0, INTERVAL, TimeUnit.MILLISECONDS);
+                isPaused = false;
+                return;
+            } else if (!timeHandle.isCancelled())
+                timeHandle.cancel(true);
+            initialTime = SystemClock.elapsedRealtime() - diff;
+            timeHandle = scheduledExecutorService
+                    .scheduleAtFixedRate(new StopTimerRunnable(), 0, INTERVAL, TimeUnit.MILLISECONDS);
+            isPaused = false;
+        } else {
+            if (timeHandle != null && !timeHandle.isCancelled())
+                timeHandle.cancel(true);
+            timeHandle = scheduledExecutorService
+                    .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
+            isPaused = true;
+        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putLong(Constants.initialTime, initialTime);
-        outState.putInt(Constants.colourPrimary, colourPrimary);
-        outState.putInt(Constants.colourAccent, colourAccent);
+        outState.putString(Constants.FORMATTED_DIFF, formattedDiff);
+        outState.putLong(Constants.INITIAL_TIME, initialTime);
+        outState.putLong(Constants.DIFF, diff);
+        outState.putInt(Constants.COLOUR_PRIMARY, colourPrimary);
+        outState.putInt(Constants.COLOUR_ACCENT, colourAccent);
+        outState.putBoolean(Constants.IS_PAUSED, isPaused);
         super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onDestroy() {
-        timer.cancel();
+        if (timeHandle != null && !timeHandle.isCancelled())
+            timeHandle.cancel(true);
         super.onDestroy();
     }
 
     @Override
-    public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int color) {
+    public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int colour) {
         if (R.string.primary == dialog.getTitle()) {
-            findViewById(R.id.rl).setBackgroundColor(color);
-            colourPrimary = color;
-            sp.edit().putInt(Constants.colourPrimary, color).apply();
+            colourPrimary = colour;
+            findViewById(R.id.rl).setBackgroundColor(colourPrimary);
+            sp.edit().putInt(Constants.COLOUR_PRIMARY, colourPrimary).apply();
         } else if (R.string.accent == dialog.getTitle()) {
-            tv.setTextColor(color);
-            colourAccent = color;
-            sp.edit().putInt(Constants.colourAccent, color).apply();
+            colourAccent = colour;
+            tv.setTextColor(colourAccent);
+            sp.edit().putInt(Constants.COLOUR_ACCENT, colourAccent).apply();
         }
     }
 
     @Override
     public void onColorChooserDismissed(@NonNull ColorChooserDialog dialog) {
 
-        if (dialog.getTitle() == R.string.accent) {
-
-            new ColorChooserDialog.Builder(MainActivity.this, R.string.primary)
+        if (dialog.getTitle() == R.string.primary) {
+            new ColorChooserDialog.Builder(MainActivity.this, R.string.accent)
                     .accentMode(false)
                     .show();
+        }
+    }
+
+    private class StopTimerRunnable implements Runnable {
+        @Override
+        public void run() {
+            diff = SystemClock.elapsedRealtime() - initialTime;
+            if (timerLength == -1 && diff > 50000)
+                timerLength = 1;
+            else if (timerLength != 0 && diff > 2750000)
+                timerLength = 2;
+
+            if (timerLength == 1) {
+                sdf.applyPattern("mm:ss:SS");
+                timerLength = -2;
+            } else if (timerLength == 2) {
+                sdf.applyPattern("HH:mm:ss");
+                timerLength = 0;
+            }
+            date.setTime(diff);
+
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    formattedDiff = sdf.format(date);
+                    tv.animateText(formattedDiff);
+                }
+            });
+        }
+    }
+
+    private class BlinkTimerRunnable implements Runnable {
+        @Override
+        public void run() {
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    tv.animate()
+                            .alpha(0.0f)
+                            .setDuration(700L)
+                            .setInterpolator(new DecelerateInterpolator())
+                            .setListener(new Animator.AnimatorListener() {
+                                @Override
+                                public void onAnimationStart(Animator animation) {
+
+                                }
+
+                                @Override
+                                public void onAnimationEnd(Animator animation) {
+                                    tv.animate()
+                                            .alpha(1.0f)
+                                            .setDuration(300L)
+                                            .setInterpolator(new AccelerateInterpolator());
+                                }
+
+                                @Override
+                                public void onAnimationCancel(Animator animation) {
+
+                                }
+
+                                @Override
+                                public void onAnimationRepeat(Animator animation) {
+
+                                }
+                            });
+                }
+            });
         }
     }
 }
