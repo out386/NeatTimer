@@ -8,9 +8,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:gravity="center"
         android:paddingBottom="30dp"
         android:paddingTop="30dp"
-        android:textSize="74sp"/>
+        android:textSize="100sp"/>
 
     <com.hanks.htextview.HTextView
         android:id="@+id/time"

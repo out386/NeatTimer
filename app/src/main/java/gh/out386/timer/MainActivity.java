@@ -20,6 +20,7 @@ import com.hanks.htextview.HTextView;
 import com.hanks.htextview.HTextViewType;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     private final int BLINK_INTERVAL = 1000;
 
     private HTextView tv;
+    private HTextView time;
     private ScheduledFuture<?> timeHandle;
     private long initialTime;
     private long diff;
@@ -40,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     private int colourAccent;
     private SharedPreferences sp;
     private SimpleDateFormat sdf;
+    private SimpleDateFormat timeSdf;
     private Date date;
     private int timerLength = -1;
     private boolean isPaused = true;
@@ -54,8 +57,10 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
         sdf = new SimpleDateFormat("ss:SS");
+        timeSdf = new SimpleDateFormat("hh:mm:ss a");
         date = new Date();
         tv = (HTextView) findViewById(R.id.tv);
+        time = (HTextView) findViewById(R.id.time);
         RelativeLayout container = (RelativeLayout) findViewById(R.id.rl);
 
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -89,15 +94,11 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         tv.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
         tv.setAnimateType(HTextViewType.EVAPORATE);
         tv.setOnClickListener(this);
-        container.setOnClickListener(this);
 
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        time.setTextColor(colourAccent);
+        time.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
+        time.setAnimateType(HTextViewType.EVAPORATE);
+        container.setOnClickListener(this);
 
         container.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -124,6 +125,18 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             }
         });
 
+    }
+
+    @Override
+    public void onResume() {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        super.onResume();
     }
 
     @Override
@@ -214,6 +227,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                 public void run() {
                     formattedDiff = sdf.format(date);
                     tv.animateText(formattedDiff);
+                    time.animateText(timeSdf.format(new Date(Calendar.getInstance().getTimeInMillis())));
                 }
             });
         }
@@ -225,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
+                    time.animateText(timeSdf.format(new Date(Calendar.getInstance().getTimeInMillis())));
                     tv.animate()
                             .alpha(0.0f)
                             .setDuration(700L)
