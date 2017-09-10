@@ -11,13 +11,13 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.RelativeLayout;
 
 import com.afollestad.materialdialogs.color.ColorChooserDialog;
-import com.hanks.htextview.HTextView;
-import com.hanks.htextview.HTextViewType;
+import com.hanks.htextview.base.HTextView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -59,8 +59,8 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         sdf = new SimpleDateFormat("ss:SS");
         timeSdf = new SimpleDateFormat("hh:mm:ss a");
         date = new Date();
-        tv = (HTextView) findViewById(R.id.tv);
-        time = (HTextView) findViewById(R.id.time);
+        tv = findViewById(R.id.tv);
+        time = findViewById(R.id.time);
         RelativeLayout container = (RelativeLayout) findViewById(R.id.rl);
 
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -92,12 +92,10 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         container.setBackgroundColor(colourPrimary);
         tv.setTextColor(colourAccent);
         tv.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
-        tv.setAnimateType(HTextViewType.EVAPORATE);
         tv.setOnClickListener(this);
 
         time.setTextColor(colourAccent);
         time.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
-        time.setAnimateType(HTextViewType.EVAPORATE);
         container.setOnClickListener(this);
 
         container.setOnLongClickListener(new View.OnLongClickListener() {
@@ -105,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             public boolean onLongClick(View v) {
                 new ColorChooserDialog.Builder(MainActivity.this, R.string.primary)
                         .accentMode(true)
-                        .show();
+                        .show(getSupportFragmentManager());
                 return true;
             }
         });
@@ -128,15 +126,27 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     }
 
     @Override
-    public void onResume() {
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus)
+            goImmersive();
+    }
+
+    @Override
+    protected void onResume() {
         super.onResume();
+        goImmersive();
+    }
+
+    private void goImmersive() {
+        getWindow().getDecorView()
+                .setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
     @Override
@@ -190,6 +200,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         } else if (R.string.accent == dialog.getTitle()) {
             colourAccent = colour;
             tv.setTextColor(colourAccent);
+            time.setTextColor(colourAccent);
             sp.edit().putInt(Constants.COLOUR_ACCENT, colourAccent).apply();
         }
     }
@@ -200,7 +211,8 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         if (dialog.getTitle() == R.string.primary) {
             new ColorChooserDialog.Builder(MainActivity.this, R.string.accent)
                     .accentMode(false)
-                    .show();
+                    .show(getSupportFragmentManager());
+
         }
     }
 

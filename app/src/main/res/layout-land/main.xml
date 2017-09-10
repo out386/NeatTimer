@@ -1,9 +1,9 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/rl"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+    android:id="@+id/rl"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <com.hanks.htextview.HTextView
+    <com.hanks.htextview.evaporate.EvaporateTextView
         android:id="@+id/tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -13,13 +13,12 @@
         android:paddingTop="30dp"
         android:textSize="100sp"/>
 
-    <com.hanks.htextview.HTextView
+    <com.hanks.htextview.evaporate.EvaporateTextView
         android:id="@+id/time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:gravity="end"
+        android:gravity="center"
         android:paddingBottom="20dp"
         android:textSize="40sp"/>
 
