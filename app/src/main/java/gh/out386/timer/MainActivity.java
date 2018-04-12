@@ -10,8 +10,9 @@ import android.os.SystemClock;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.RelativeLayout;
@@ -29,7 +30,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 
-public class MainActivity extends AppCompatActivity implements ColorChooserDialog.ColorCallback, View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements ColorChooserDialog.ColorCallback {
     private final int INTERVAL = 205;
     private final int BLINK_INTERVAL = 1000;
 
@@ -48,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     private boolean isPaused = true;
     private String formattedDiff;
     private ScheduledExecutorService scheduledExecutorService;
+    private GestureDetector timerGesture;
+    private GestureDetector containerGesture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,10 +64,13 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         date = new Date();
         tv = findViewById(R.id.tv);
         time = findViewById(R.id.time);
-        RelativeLayout container = (RelativeLayout) findViewById(R.id.rl);
+        RelativeLayout container = findViewById(R.id.rl);
 
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         tv.animateText(getResources().getString(R.string.timer_initial_text));
+
+        timerGesture = new GestureDetector(this, new TimerViewListener());
+        containerGesture = new GestureDetector(this, new ContainerListener());
 
         if (savedInstanceState == null) {
             colourPrimary = sp.getInt(Constants.COLOUR_PRIMARY, 0xffffff);
@@ -92,37 +98,22 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         container.setBackgroundColor(colourPrimary);
         tv.setTextColor(colourAccent);
         tv.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
-        tv.setOnClickListener(this);
 
         time.setTextColor(colourAccent);
         time.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
-        container.setOnClickListener(this);
 
-        container.setOnLongClickListener(new View.OnLongClickListener() {
+        container.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public boolean onLongClick(View v) {
-                new ColorChooserDialog.Builder(MainActivity.this, R.string.primary)
-                        .accentMode(true)
-                        .show(getSupportFragmentManager());
-                return true;
+            public boolean onTouch(View v, MotionEvent event) {
+                return containerGesture.onTouchEvent(event);
             }
         });
-
-        tv.setOnLongClickListener(new View.OnLongClickListener() {
+        tv.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public boolean onLongClick(View v) {
-                diff = 0L;
-                formattedDiff = "00:00";
-                isPaused = true;
-                tv.animateText(formattedDiff);
-                if (timeHandle != null && !timeHandle.isCancelled())
-                    timeHandle.cancel(true);
-                timeHandle = scheduledExecutorService
-                        .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
-                return true;
+            public boolean onTouch(View v, MotionEvent event) {
+                return timerGesture.onTouchEvent(event);
             }
         });
-
     }
 
     @Override
@@ -147,30 +138,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                                 | View.SYSTEM_UI_FLAG_FULLSCREEN
                                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-    }
-
-    @Override
-    public void onClick(View v) {
-        if (isPaused) {
-            if (timeHandle == null) {
-                initialTime = SystemClock.elapsedRealtime();
-                timeHandle = scheduledExecutorService
-                        .scheduleAtFixedRate(new StopTimerRunnable(), 0, INTERVAL, TimeUnit.MILLISECONDS);
-                isPaused = false;
-                return;
-            } else if (!timeHandle.isCancelled())
-                timeHandle.cancel(true);
-            initialTime = SystemClock.elapsedRealtime() - diff;
-            timeHandle = scheduledExecutorService
-                    .scheduleAtFixedRate(new StopTimerRunnable(), 0, INTERVAL, TimeUnit.MILLISECONDS);
-            isPaused = false;
-        } else {
-            if (timeHandle != null && !timeHandle.isCancelled())
-                timeHandle.cancel(true);
-            timeHandle = scheduledExecutorService
-                    .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
-            isPaused = true;
-        }
     }
 
     @Override
@@ -201,6 +168,10 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             colourAccent = colour;
             tv.setTextColor(colourAccent);
             time.setTextColor(colourAccent);
+
+            // Needed because the colours will not be changed until the HTextViews update
+            tv.animateText(tv.getText());
+            time.animateText(time.getText());
             sp.edit().putInt(Constants.COLOUR_ACCENT, colourAccent).apply();
         }
     }
@@ -213,6 +184,29 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                     .accentMode(false)
                     .show(getSupportFragmentManager());
 
+        }
+    }
+
+    private void onTimerPaused() {
+        if (isPaused) {
+            if (timeHandle == null) {
+                initialTime = SystemClock.elapsedRealtime();
+                timeHandle = scheduledExecutorService
+                        .scheduleAtFixedRate(new StopTimerRunnable(), 0, INTERVAL, TimeUnit.MILLISECONDS);
+                isPaused = false;
+                return;
+            } else if (!timeHandle.isCancelled())
+                timeHandle.cancel(true);
+            initialTime = SystemClock.elapsedRealtime() - diff;
+            timeHandle = scheduledExecutorService
+                    .scheduleAtFixedRate(new StopTimerRunnable(), 0, INTERVAL, TimeUnit.MILLISECONDS);
+            isPaused = false;
+        } else {
+            if (timeHandle != null && !timeHandle.isCancelled())
+                timeHandle.cancel(true);
+            timeHandle = scheduledExecutorService
+                    .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
+            isPaused = true;
         }
     }
 
@@ -282,6 +276,53 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                             });
                 }
             });
+        }
+    }
+
+    private class TimerViewListener extends GestureDetector.SimpleOnGestureListener {
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return true;
+        }
+
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            onTimerPaused();
+            return true;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            diff = 0L;
+            formattedDiff = "00:00";
+            isPaused = true;
+            tv.animateText(formattedDiff);
+            if (timeHandle != null && !timeHandle.isCancelled())
+                timeHandle.cancel(true);
+            timeHandle = scheduledExecutorService
+                    .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private class ContainerListener extends GestureDetector.SimpleOnGestureListener {
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return true;
+        }
+
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            onTimerPaused();
+            return true;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            new ColorChooserDialog.Builder(MainActivity.this, R.string.primary)
+                    .accentMode(true)
+                    .show(getSupportFragmentManager());
         }
     }
 }
