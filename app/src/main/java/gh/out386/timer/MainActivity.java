@@ -34,23 +34,27 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     private final int INTERVAL = 205;
     private final int BLINK_INTERVAL = 1000;
 
-    private HTextView tv;
-    private HTextView time;
+    private HTextView timerTv;
+    private HTextView clockTv;
     private ScheduledFuture<?> timeHandle;
     private long initialTime;
     private long diff;
+    private byte lastSetClockSeconds = 0;
     private int colourPrimary;
     private int colourAccent;
     private SharedPreferences sp;
     private SimpleDateFormat sdf;
     private SimpleDateFormat timeSdf;
-    private Date date;
-    private int timerLength = -1;
+    private Date timerDate;
+    private Date clockDate;
+    private int timerLength = 0;
     private boolean isPaused = true;
     private String formattedDiff;
+    private String lastTimerTime;
     private ScheduledExecutorService scheduledExecutorService;
     private GestureDetector timerGesture;
     private GestureDetector containerGesture;
+    private SetTextsRunnable setTextsRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,16 +65,18 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
 
         sdf = new SimpleDateFormat("ss:SS");
         timeSdf = new SimpleDateFormat("hh:mm:ss a");
-        date = new Date();
-        tv = findViewById(R.id.tv);
-        time = findViewById(R.id.time);
+        timerDate = new Date();
+        clockDate = new Date();
+        timerTv = findViewById(R.id.tv);
+        clockTv = findViewById(R.id.time);
         RelativeLayout container = findViewById(R.id.rl);
 
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        tv.animateText(getResources().getString(R.string.timer_initial_text));
+        timerTv.animateText(getResources().getString(R.string.timer_initial_text));
 
         timerGesture = new GestureDetector(this, new TimerViewListener());
         containerGesture = new GestureDetector(this, new ContainerListener());
+        setTextsRunnable = new SetTextsRunnable();
 
         if (savedInstanceState == null) {
             colourPrimary = sp.getInt(Constants.COLOUR_PRIMARY, 0xffffff);
@@ -87,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             diff = savedInstanceState.getLong(Constants.DIFF);
             if (isPaused) {
                 formattedDiff = savedInstanceState.getString(Constants.FORMATTED_DIFF);
-                tv.animateText(formattedDiff);
+                timerTv.animateText(formattedDiff);
                 timeHandle = scheduledExecutorService
                         .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
             } else
@@ -96,11 +102,11 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         }
 
         container.setBackgroundColor(colourPrimary);
-        tv.setTextColor(colourAccent);
-        tv.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
+        timerTv.setTextColor(colourAccent);
+        timerTv.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
 
-        time.setTextColor(colourAccent);
-        time.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
+        clockTv.setTextColor(colourAccent);
+        clockTv.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
 
         container.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -108,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                 return containerGesture.onTouchEvent(event);
             }
         });
-        tv.setOnTouchListener(new View.OnTouchListener() {
+        timerTv.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 return timerGesture.onTouchEvent(event);
@@ -166,12 +172,12 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             sp.edit().putInt(Constants.COLOUR_PRIMARY, colourPrimary).apply();
         } else if (R.string.accent == dialog.getTitle()) {
             colourAccent = colour;
-            tv.setTextColor(colourAccent);
-            time.setTextColor(colourAccent);
+            timerTv.setTextColor(colourAccent);
+            clockTv.setTextColor(colourAccent);
 
             // Needed because the colours will not be changed until the HTextViews update
-            tv.animateText(tv.getText());
-            time.animateText(time.getText());
+            timerTv.animateText(timerTv.getText());
+            clockTv.animateText(clockTv.getText());
             sp.edit().putInt(Constants.COLOUR_ACCENT, colourAccent).apply();
         }
     }
@@ -214,28 +220,38 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         @Override
         public void run() {
             diff = SystemClock.elapsedRealtime() - initialTime;
-            if (timerLength == -1 && diff > 50000)
-                timerLength = 1;
-            else if (timerLength != 0 && diff > 2750000)
-                timerLength = 2;
-
-            if (timerLength == 1) {
+            if (timerLength == 0 && diff > 50000) {
                 sdf.applyPattern("mm:ss:SS");
-                timerLength = -2;
-            } else if (timerLength == 2) {
+                timerLength = 1;
+            } else if (timerLength == 1 && diff > 2750000) {
                 sdf.applyPattern("HH:mm:ss");
-                timerLength = 0;
+                timerLength = 2;
             }
-            date.setTime(diff);
 
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    formattedDiff = sdf.format(date);
-                    tv.animateText(formattedDiff);
-                    time.animateText(timeSdf.format(new Date(Calendar.getInstance().getTimeInMillis())));
-                }
-            });
+            timerDate.setTime(diff);
+            clockDate.setTime(System.currentTimeMillis());
+
+            MainActivity.this.runOnUiThread(setTextsRunnable);
+        }
+    }
+
+    private class SetTextsRunnable implements Runnable {
+        @Override
+        public void run() {
+            formattedDiff = sdf.format(timerDate.getTime());
+            if (!formattedDiff.equals(lastTimerTime)) {
+                timerTv.animateText(formattedDiff);
+                lastTimerTime = formattedDiff;
+            }
+
+            // Update only when seconds change. This Runnable should be called multiple times a second.
+            long currentClockTime = clockDate.getTime();
+            byte currentClockSeconds = (byte) ((currentClockTime / 1000) % 10);
+            if (currentClockSeconds != lastSetClockSeconds) {
+                String timeStr = timeSdf.format(clockDate);
+                clockTv.animateText(timeStr);
+                lastSetClockSeconds = currentClockSeconds;
+            }
         }
     }
 
@@ -245,8 +261,8 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    time.animateText(timeSdf.format(new Date(Calendar.getInstance().getTimeInMillis())));
-                    tv.animate()
+                    clockTv.animateText(timeSdf.format(new Date(Calendar.getInstance().getTimeInMillis())));
+                    timerTv.animate()
                             .alpha(0.0f)
                             .setDuration(700L)
                             .setInterpolator(new DecelerateInterpolator())
@@ -258,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
 
                                 @Override
                                 public void onAnimationEnd(Animator animation) {
-                                    tv.animate()
+                                    timerTv.animate()
                                             .alpha(1.0f)
                                             .setDuration(300L)
                                             .setInterpolator(new AccelerateInterpolator());
@@ -297,7 +313,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             diff = 0L;
             formattedDiff = "00:00";
             isPaused = true;
-            tv.animateText(formattedDiff);
+            timerTv.animateText(formattedDiff);
             if (timeHandle != null && !timeHandle.isCancelled())
                 timeHandle.cancel(true);
             timeHandle = scheduledExecutorService
