@@ -312,6 +312,8 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         public void onLongPress(MotionEvent e) {
             diff = 0L;
             formattedDiff = "00:00";
+            timerLength = 0;
+            sdf.applyPattern("ss:SS");
             isPaused = true;
             timerTv.animateText(formattedDiff);
             if (timeHandle != null && !timeHandle.isCancelled())
