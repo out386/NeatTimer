@@ -1,4 +1,4 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<gh.out386.timer.customviews.PrefsColourRelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/rl"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -24,4 +24,4 @@
         android:textSize="40sp" />
 
 
-</RelativeLayout>
+</gh.out386.timer.customviews.PrefsColourRelativeLayout>

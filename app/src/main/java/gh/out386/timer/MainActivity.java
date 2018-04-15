@@ -13,11 +13,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.RelativeLayout;
 
 import com.afollestad.materialdialogs.color.ColorChooserDialog;
 
 import gh.out386.timer.customviews.PrefsColourEvaporateTextView;
+import gh.out386.timer.customviews.PrefsColourRelativeLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     private long diff;
     private byte lastSetClockSeconds = 0;
     private int colourPrimary;
-    private SharedPreferences sp;
     private SimpleDateFormat sdf;
     private SimpleDateFormat timeSdf;
     private Date timerDate;
@@ -49,15 +48,13 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     private String formattedDiff;
     private String lastTimerTime;
     private ScheduledExecutorService scheduledExecutorService;
-    private GestureDetector containerGesture;
     private SetTextsRunnable setTextsRunnable;
 
-    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        sp = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
         scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
         sdf = new SimpleDateFormat("ss:SS");
@@ -66,16 +63,14 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         clockDate = new Date();
         timerTv = findViewById(R.id.tv);
         clockTv = findViewById(R.id.time);
-        RelativeLayout container = findViewById(R.id.rl);
 
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         timerTv.animateText(getResources().getString(R.string.timer_initial_text));
 
-        containerGesture = new GestureDetector(this, new ContainerListener());
         setTextsRunnable = new SetTextsRunnable();
 
         if (savedInstanceState == null) {
-            colourPrimary = sp.getInt(Constants.COLOUR_PRIMARY, 0xffffff);
+            colourPrimary = prefs.getInt(Constants.COLOUR_PRIMARY, 0xffffff);
             diff = 0;
             formattedDiff = "00:00";
             timeHandle = scheduledExecutorService
@@ -95,20 +90,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                         .scheduleAtFixedRate(new StopTimerRunnable(), 0, INTERVAL, TimeUnit.MILLISECONDS);
         }
 
-        container.setBackgroundColor(colourPrimary);
-
-        container.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return containerGesture.onTouchEvent(event);
-            }
-        });
-        timerTv.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return timerGesture.onTouchEvent(event);
-            }
-        });
+        setViewListeners();
     }
 
     @Override
@@ -155,9 +137,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     @Override
     public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int colour) {
         if (R.string.primary == dialog.getTitle()) {
-            colourPrimary = colour;
-            findViewById(R.id.rl).setBackgroundColor(colourPrimary);
-            sp.edit().putInt(Constants.COLOUR_PRIMARY, colourPrimary).apply();
+            PrefsColourRelativeLayout.setDynamicColour(getApplicationContext(), colour);
         } else if (R.string.accent == dialog.getTitle()) {
             PrefsColourEvaporateTextView.setDynamicColour(getApplicationContext(), colour);
         }
@@ -166,10 +146,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     @Override
     public void onColorChooserDismissed(@NonNull ColorChooserDialog dialog) {
         if (dialog.getTitle() == R.string.primary) {
-            new ColorChooserDialog.Builder(MainActivity.this, R.string.accent)
-                    .accentMode(false)
-                    .show(getSupportFragmentManager());
-
+            showColourDialog(false);
         }
     }
 
@@ -196,7 +173,18 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         }
     }
 
+    private void showColourDialog(boolean accentMode) {
+        int titleRes = accentMode ? R.string.primary : R.string.accent;
+        new ColorChooserDialog.Builder(MainActivity.this, titleRes)
+                .accentMode(accentMode)
+                .show(getSupportFragmentManager());
+    }
+
     private void setViewListeners() {
+        PrefsColourRelativeLayout container = findViewById(R.id.rl);
+        container.setOnSingleTapListener(this::onTimerPaused);
+        container.setOnLongPressListener(() -> showColourDialog(true));
+
         timerTv.setOnSingleTapListener(this::onTimerPaused);
         timerTv.setOnLongPressListener(() -> {
             diff = 0L;
@@ -292,24 +280,4 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         }
     }
 
-    private class ContainerListener extends GestureDetector.SimpleOnGestureListener {
-
-        @Override
-        public boolean onDown(MotionEvent e) {
-            return true;
-        }
-
-        @Override
-        public boolean onSingleTapConfirmed(MotionEvent e) {
-            onTimerPaused();
-            return true;
-        }
-
-        @Override
-        public void onLongPress(MotionEvent e) {
-            new ColorChooserDialog.Builder(MainActivity.this, R.string.primary)
-                    .accentMode(true)
-                    .show(getSupportFragmentManager());
-        }
-    }
 }
