@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.hanks.htextview.evaporate.EvaporateTextView
+    <gh.out386.timer.customviews.PrefsColourEvaporateTextView
         android:id="@+id/tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -11,16 +11,16 @@
         android:gravity="center"
         android:paddingBottom="30dp"
         android:paddingTop="30dp"
-        android:textSize="100sp"/>
+        android:textSize="100sp" />
 
-    <com.hanks.htextview.evaporate.EvaporateTextView
+    <gh.out386.timer.customviews.PrefsColourEvaporateTextView
         android:id="@+id/time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:gravity="center"
         android:paddingBottom="20dp"
-        android:textSize="40sp"/>
+        android:textSize="40sp" />
 
 
 </RelativeLayout>

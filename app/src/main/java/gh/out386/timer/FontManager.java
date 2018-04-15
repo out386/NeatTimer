@@ -13,8 +13,7 @@ import java.util.Map;
  * <p/>
  * Created by mathias.berwig on 22/06/2016.
  */
-class FontManager {
-    private static final String TAG = FontManager.class.getName();
+public class FontManager {
 
     private static FontManager instance;
 
@@ -27,14 +26,14 @@ class FontManager {
         this.fonts = new HashMap<>();
     }
 
-    static FontManager getInstance(AssetManager assetManager) {
+    public static FontManager getInstance(AssetManager assetManager) {
         if (instance == null) {
             instance = new FontManager(assetManager);
         }
         return instance;
     }
 
-    Typeface getFont(String asset) {
+    public Typeface getFont(String asset) {
         if (fonts.containsKey(asset))
             return fonts.get(asset);
 
@@ -44,7 +43,7 @@ class FontManager {
             font = Typeface.createFromAsset(assetManager, asset);
             fonts.put(asset, font);
         } catch (RuntimeException e) {
-            Log.e(TAG, "getFont: Can't create font from asset.", e);
+            Log.e("fonts", "getFont: Can't create font from asset.", e);
         }
 
         return font;

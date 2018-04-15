@@ -1,28 +1,27 @@
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/rl"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.hanks.htextview.evaporate.EvaporateTextView
+    <gh.out386.timer.customviews.PrefsColourEvaporateTextView
         android:id="@+id/tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:gravity="center"
         android:paddingBottom="30dp"
         android:paddingTop="30dp"
-        android:textSize="74sp"
-        android:gravity="center"/>
+        android:textSize="74sp" />
 
-    <com.hanks.htextview.evaporate.EvaporateTextView
+    <gh.out386.timer.customviews.PrefsColourEvaporateTextView
         android:id="@+id/time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:gravity="center"
-        android:paddingTop="30dp"
         android:paddingBottom="20dp"
-        android:textSize="40sp"/>
+        android:paddingTop="30dp"
+        android:textSize="40sp" />
 
 
 </RelativeLayout>

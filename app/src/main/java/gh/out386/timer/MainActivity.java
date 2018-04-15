@@ -10,15 +10,14 @@ import android.os.SystemClock;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.RelativeLayout;
 
 import com.afollestad.materialdialogs.color.ColorChooserDialog;
-import com.hanks.htextview.base.HTextView;
+
+import gh.out386.timer.customviews.PrefsColourEvaporateTextView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -29,19 +28,17 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-
 public class MainActivity extends AppCompatActivity implements ColorChooserDialog.ColorCallback {
     private final int INTERVAL = 205;
     private final int BLINK_INTERVAL = 1000;
 
-    private HTextView timerTv;
-    private HTextView clockTv;
+    private PrefsColourEvaporateTextView timerTv;
+    private PrefsColourEvaporateTextView clockTv;
     private ScheduledFuture<?> timeHandle;
     private long initialTime;
     private long diff;
     private byte lastSetClockSeconds = 0;
     private int colourPrimary;
-    private int colourAccent;
     private SharedPreferences sp;
     private SimpleDateFormat sdf;
     private SimpleDateFormat timeSdf;
@@ -52,10 +49,10 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     private String formattedDiff;
     private String lastTimerTime;
     private ScheduledExecutorService scheduledExecutorService;
-    private GestureDetector timerGesture;
     private GestureDetector containerGesture;
     private SetTextsRunnable setTextsRunnable;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,13 +71,11 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         timerTv.animateText(getResources().getString(R.string.timer_initial_text));
 
-        timerGesture = new GestureDetector(this, new TimerViewListener());
         containerGesture = new GestureDetector(this, new ContainerListener());
         setTextsRunnable = new SetTextsRunnable();
 
         if (savedInstanceState == null) {
             colourPrimary = sp.getInt(Constants.COLOUR_PRIMARY, 0xffffff);
-            colourAccent = sp.getInt(Constants.COLOUR_ACCENT, 0x000000);
             diff = 0;
             formattedDiff = "00:00";
             timeHandle = scheduledExecutorService
@@ -88,7 +83,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         } else {
             initialTime = savedInstanceState.getLong(Constants.INITIAL_TIME);
             colourPrimary = savedInstanceState.getInt(Constants.COLOUR_PRIMARY);
-            colourAccent = savedInstanceState.getInt(Constants.COLOUR_ACCENT);
             isPaused = savedInstanceState.getBoolean(Constants.IS_PAUSED);
             diff = savedInstanceState.getLong(Constants.DIFF);
             if (isPaused) {
@@ -102,11 +96,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         }
 
         container.setBackgroundColor(colourPrimary);
-        timerTv.setTextColor(colourAccent);
-        timerTv.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
-
-        clockTv.setTextColor(colourAccent);
-        clockTv.setTypeface(FontManager.getInstance(getAssets()).getFont("fonts/NotCourierSans-webfont.ttf"));
 
         container.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -152,7 +141,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         outState.putLong(Constants.INITIAL_TIME, initialTime);
         outState.putLong(Constants.DIFF, diff);
         outState.putInt(Constants.COLOUR_PRIMARY, colourPrimary);
-        outState.putInt(Constants.COLOUR_ACCENT, colourAccent);
         outState.putBoolean(Constants.IS_PAUSED, isPaused);
         super.onSaveInstanceState(outState);
     }
@@ -171,20 +159,12 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             findViewById(R.id.rl).setBackgroundColor(colourPrimary);
             sp.edit().putInt(Constants.COLOUR_PRIMARY, colourPrimary).apply();
         } else if (R.string.accent == dialog.getTitle()) {
-            colourAccent = colour;
-            timerTv.setTextColor(colourAccent);
-            clockTv.setTextColor(colourAccent);
-
-            // Needed because the colours will not be changed until the HTextViews update
-            timerTv.animateText(timerTv.getText());
-            clockTv.animateText(clockTv.getText());
-            sp.edit().putInt(Constants.COLOUR_ACCENT, colourAccent).apply();
+            PrefsColourEvaporateTextView.setDynamicColour(getApplicationContext(), colour);
         }
     }
 
     @Override
     public void onColorChooserDismissed(@NonNull ColorChooserDialog dialog) {
-
         if (dialog.getTitle() == R.string.primary) {
             new ColorChooserDialog.Builder(MainActivity.this, R.string.accent)
                     .accentMode(false)
@@ -214,6 +194,23 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                     .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
             isPaused = true;
         }
+    }
+
+    private void setViewListeners() {
+        timerTv.setOnSingleTapListener(this::onTimerPaused);
+        timerTv.setOnLongPressListener(() -> {
+            diff = 0L;
+            formattedDiff = "00:00";
+            timerLength = 0;
+            sdf.applyPattern("ss:SS");
+            isPaused = true;
+            timerTv.animateText(formattedDiff);
+            if (timeHandle != null && !timeHandle.isCancelled())
+                timeHandle.cancel(true);
+            timeHandle = scheduledExecutorService
+                    .scheduleAtFixedRate(new BlinkTimerRunnable(),
+                            0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
+        });
     }
 
     private class StopTimerRunnable implements Runnable {
@@ -292,34 +289,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                             });
                 }
             });
-        }
-    }
-
-    private class TimerViewListener extends GestureDetector.SimpleOnGestureListener {
-
-        @Override
-        public boolean onDown(MotionEvent e) {
-            return true;
-        }
-
-        @Override
-        public boolean onSingleTapConfirmed(MotionEvent e) {
-            onTimerPaused();
-            return true;
-        }
-
-        @Override
-        public void onLongPress(MotionEvent e) {
-            diff = 0L;
-            formattedDiff = "00:00";
-            timerLength = 0;
-            sdf.applyPattern("ss:SS");
-            isPaused = true;
-            timerTv.animateText(formattedDiff);
-            if (timeHandle != null && !timeHandle.isCancelled())
-                timeHandle.cancel(true);
-            timeHandle = scheduledExecutorService
-                    .scheduleAtFixedRate(new BlinkTimerRunnable(), 0, BLINK_INTERVAL, TimeUnit.MILLISECONDS);
         }
     }
 
