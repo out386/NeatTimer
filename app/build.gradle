@@ -28,4 +28,5 @@ dependencies {
     implementation "com.hanks:htextview-evaporate:0.1.2"
     implementation 'com.afollestad.material-dialogs:commons:0.9.6.0'
 
+    implementation 'com.android.support:support-v4:27.0.1'
 }

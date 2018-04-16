@@ -16,11 +16,11 @@ import android.view.animation.DecelerateInterpolator;
 
 import com.afollestad.materialdialogs.color.ColorChooserDialog;
 
+import gh.out386.timer.clock.ClockFragment;
 import gh.out386.timer.customviews.PrefsColourEvaporateTextView;
 import gh.out386.timer.customviews.PrefsColourRelativeLayout;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
@@ -33,16 +33,13 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     private final int BLINK_INTERVAL = 1000;
 
     private PrefsColourEvaporateTextView timerTv;
-    private PrefsColourEvaporateTextView clockTv;
     private ScheduledFuture<?> timeHandle;
     private long initialTime;
     private long diff;
     private byte lastSetClockSeconds = 0;
     private int colourPrimary;
     private SimpleDateFormat sdf;
-    private SimpleDateFormat timeSdf;
     private Date timerDate;
-    private Date clockDate;
     private int timerLength = 0;
     private boolean isPaused = true;
     private String formattedDiff;
@@ -58,11 +55,10 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
         sdf = new SimpleDateFormat("ss:SS");
-        timeSdf = new SimpleDateFormat("hh:mm:ss a");
         timerDate = new Date();
-        clockDate = new Date();
         timerTv = findViewById(R.id.tv);
-        clockTv = findViewById(R.id.time);
+
+        showClock();
 
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         timerTv.animateText(getResources().getString(R.string.timer_initial_text));
@@ -91,6 +87,13 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         }
 
         setViewListeners();
+    }
+
+    private void showClock() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.clock_container, new ClockFragment())
+                .commit();
     }
 
     @Override
@@ -214,7 +217,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             }
 
             timerDate.setTime(diff);
-            clockDate.setTime(System.currentTimeMillis());
 
             MainActivity.this.runOnUiThread(setTextsRunnable);
         }
@@ -228,15 +230,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                 timerTv.animateText(formattedDiff);
                 lastTimerTime = formattedDiff;
             }
-
-            // Update only when seconds change. This Runnable should be called multiple times a second.
-            long currentClockTime = clockDate.getTime();
-            byte currentClockSeconds = (byte) ((currentClockTime / 1000) % 10);
-            if (currentClockSeconds != lastSetClockSeconds) {
-                String timeStr = timeSdf.format(clockDate);
-                clockTv.animateText(timeStr);
-                lastSetClockSeconds = currentClockSeconds;
-            }
         }
     }
 
@@ -246,7 +239,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    clockTv.animateText(timeSdf.format(new Date(Calendar.getInstance().getTimeInMillis())));
                     timerTv.animate()
                             .alpha(0.0f)
                             .setDuration(700L)
