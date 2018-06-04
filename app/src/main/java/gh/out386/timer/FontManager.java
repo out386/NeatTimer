@@ -1,3 +1,9 @@
+/*
+ * Original source: http://stackoverflow.com/a/29134056
+ *
+ * Created by themarshal.
+ */
+
 package gh.out386.timer;
 
 import android.content.res.AssetManager;
@@ -7,12 +13,6 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Just a simple singleton class to manage font loading from assets.
- * Original source: <a href="http://stackoverflow.com/a/29134056">http://stackoverflow.com/a/29134056</a>
- * <p/>
- * Created by mathias.berwig on 22/06/2016.
- */
 public class FontManager {
 
     private static FontManager instance;
