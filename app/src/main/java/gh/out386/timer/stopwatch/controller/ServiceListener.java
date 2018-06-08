@@ -1,4 +1,4 @@
-package gh.out386.timer.timer.controller;
+package gh.out386.timer.stopwatch.controller;
 
 /*
  * Copyright (C) 2018 Ritayan Chakraborty
@@ -18,6 +18,6 @@ package gh.out386.timer.timer.controller;
  * with Timer. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-public interface FragmentListener {
-    void onUpdateStatus(boolean isPaused, String time);
+public interface ServiceListener {
+    void onUpdateStatus(boolean isPaused, String time, String notifTime);
 }

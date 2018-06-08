@@ -15,8 +15,8 @@
  *
  */
 
-package gh.out386.timer.timer;
+package gh.out386.timer.stopwatch;
 
-public interface TimerActivityListener {
+public interface StopwatchActivityListener {
     void onTapped();
 }

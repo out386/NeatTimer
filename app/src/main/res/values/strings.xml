@@ -4,11 +4,11 @@
     <string name="app_name">Timer</string>
     <string name="accent">Accent</string>
     <string name="primary">Primary</string>
-    <string name="timer_initial_text">00:00</string>
-    <string name="timer_format_1">ss:SS</string>
-    <string name="timer_format_2">mm:ss:SS</string>
-    <string name="timer_format_3">HH:mm:ss</string>
-    <string name="timer_format_notif">mm:ss</string>
+    <string name="stopwatch_initial_text">00:00</string>
+    <string name="stopwatch_format_1">ss:SS</string>
+    <string name="stopwatch_format_2">mm:ss:SS</string>
+    <string name="stopwatch_format_3">HH:mm:ss</string>
+    <string name="stopwatch_format_notif">mm:ss</string>
     <string name="notif_stopwatch_running_title">Stopwatch is running</string>
     <string name="notif_stopwatch_paused_title">Stopwatch is paused</string>
     <string name="notif_stopwatch_pause">Pause</string>

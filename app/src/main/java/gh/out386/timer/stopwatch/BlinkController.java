@@ -17,7 +17,7 @@
  *
  */
 
-package gh.out386.timer.timer;
+package gh.out386.timer.stopwatch;
 
 import android.os.Handler;
 import android.view.animation.AccelerateInterpolator;

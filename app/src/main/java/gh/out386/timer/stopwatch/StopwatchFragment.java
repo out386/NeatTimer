@@ -17,7 +17,7 @@
  *
  */
 
-package gh.out386.timer.timer;
+package gh.out386.timer.stopwatch;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -35,34 +35,34 @@ import android.view.ViewGroup;
 
 import gh.out386.timer.R;
 import gh.out386.timer.customviews.PrefsColourEvaporateTextView;
-import gh.out386.timer.timer.controller.FragmentListener;
-import gh.out386.timer.timer.controller.TimerService;
+import gh.out386.timer.stopwatch.controller.FragmentListener;
+import gh.out386.timer.stopwatch.controller.StopwatchService;
 
-public class TimerFragment extends Fragment implements TimerActivityListener, FragmentListener {
+public class StopwatchFragment extends Fragment implements StopwatchActivityListener, FragmentListener {
 
-    public static String TAG = "TIMER_TAG";
+    public static String TAG = "STOPWATCH_TAG";
 
-    private PrefsColourEvaporateTextView timerTv;
+    private PrefsColourEvaporateTextView stopwatchTv;
     private BlinkController blinkController;
-    private TimerService timerService;
+    private StopwatchService stopwatchService;
     private Intent servicePRIntent;
     private Intent serviceResetIntent;
     private Activity activity;
     private boolean isBound;
     private boolean isPaused = false;
-    private ServiceConnection timerConnection = new ServiceConnection() {
+    private ServiceConnection stopwatchConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            timerService = ((TimerService.TimerBinder) service).getService();
+            stopwatchService = ((StopwatchService.StopwatchBinder) service).getService();
             isBound = true;
-            updateStatus(timerService.getStatus());
-            timerService.setFragmentListener(TimerFragment.this);
-            timerService.unforgroundify();
+            updateStatus(stopwatchService.getStatus());
+            stopwatchService.setFragmentListener(StopwatchFragment.this);
+            stopwatchService.unforgroundify();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            timerService = null;
+            stopwatchService = null;
             isBound = false;
         }
     };
@@ -70,9 +70,9 @@ public class TimerFragment extends Fragment implements TimerActivityListener, Fr
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_timer, container, false);
-        timerTv = v.findViewById(R.id.timerTv);
-        blinkController = new BlinkController(timerTv);
+        View v = inflater.inflate(R.layout.fragment_stopwatch, container, false);
+        stopwatchTv = v.findViewById(R.id.stopwatchTv);
+        blinkController = new BlinkController(stopwatchTv);
 
         return v;
     }
@@ -80,10 +80,10 @@ public class TimerFragment extends Fragment implements TimerActivityListener, Fr
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        servicePRIntent = new Intent(getContext(), TimerService.class)
-                .setAction(TimerService.TIMER_PAUSE_RESUME);
-        serviceResetIntent = new Intent(getContext(), TimerService.class)
-                .setAction(TimerService.TIMER_RESET);
+        servicePRIntent = new Intent(getContext(), StopwatchService.class)
+                .setAction(StopwatchService.TIMER_PAUSE_RESUME);
+        serviceResetIntent = new Intent(getContext(), StopwatchService.class)
+                .setAction(StopwatchService.TIMER_RESET);
         setTextListeners();
     }
 
@@ -99,8 +99,8 @@ public class TimerFragment extends Fragment implements TimerActivityListener, Fr
     @Override
     public void onStart() {
         super.onStart();
-        Intent timerIntent = new Intent(getActivity(), TimerService.class);
-        activity.bindService(timerIntent, timerConnection, Context.BIND_AUTO_CREATE);
+        Intent stopwatchIntent = new Intent(getActivity(), StopwatchService.class);
+        activity.bindService(stopwatchIntent, stopwatchConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -108,9 +108,9 @@ public class TimerFragment extends Fragment implements TimerActivityListener, Fr
         super.onResume();
         // No problem if these have already been called by onServiceConnected
         if (isBound) {
-            updateStatus(timerService.getStatus());
-            timerService.setFragmentListener(this);
-            timerService.unforgroundify();
+            updateStatus(stopwatchService.getStatus());
+            stopwatchService.setFragmentListener(this);
+            stopwatchService.unforgroundify();
         }
     }
 
@@ -118,9 +118,9 @@ public class TimerFragment extends Fragment implements TimerActivityListener, Fr
     public void onPause() {
         super.onPause();
         if (isBound) {
-            timerService.unsetActivityListener();
-            if (timerService.isRunningOrPaused())
-                timerService.forgroundify();
+            stopwatchService.unsetActivityListener();
+            if (stopwatchService.isRunningOrPaused())
+                stopwatchService.forgroundify();
         }
         isPaused = false;
         blinkController.stopBlink();
@@ -129,9 +129,9 @@ public class TimerFragment extends Fragment implements TimerActivityListener, Fr
     @Override
     public void onStop() {
         super.onStop();
-        activity.unbindService(timerConnection);
+        activity.unbindService(stopwatchConnection);
         isBound = false;
-        timerService = null;
+        stopwatchService = null;
     }
 
     @Override
@@ -140,8 +140,8 @@ public class TimerFragment extends Fragment implements TimerActivityListener, Fr
     }
 
     private void setTextListeners() {
-        timerTv.setOnSingleTapListener(() -> activity.startService(servicePRIntent));
-        timerTv.setOnLongPressListener(() -> activity.startService(serviceResetIntent));
+        stopwatchTv.setOnSingleTapListener(() -> activity.startService(servicePRIntent));
+        stopwatchTv.setOnLongPressListener(() -> activity.startService(serviceResetIntent));
     }
 
     @Override
@@ -149,7 +149,7 @@ public class TimerFragment extends Fragment implements TimerActivityListener, Fr
         activity.startService(servicePRIntent);
     }
 
-    private void updateStatus(TimerStatus status) {
+    private void updateStatus(StopwatchStatus status) {
         onUpdateStatus(status.getPaused(), status.getTime());
     }
 
@@ -164,6 +164,6 @@ public class TimerFragment extends Fragment implements TimerActivityListener, Fr
             blinkController.startBlink();
             this.isPaused = true;
         }
-        timerTv.animateText(time);
+        stopwatchTv.animateText(time);
     }
 }

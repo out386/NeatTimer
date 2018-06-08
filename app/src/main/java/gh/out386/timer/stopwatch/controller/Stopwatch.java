@@ -17,7 +17,7 @@
  *
  */
 
-package gh.out386.timer.timer.controller;
+package gh.out386.timer.stopwatch.controller;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -33,9 +33,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import gh.out386.timer.R;
-import gh.out386.timer.timer.TimerStatus;
+import gh.out386.timer.stopwatch.StopwatchStatus;
 
-public class Timer {
+public class Stopwatch {
 
     private static final int INTERVAL = 205;
 
@@ -44,31 +44,31 @@ public class Timer {
     private volatile long diff;
     private SimpleDateFormat sdf;
     private SimpleDateFormat notifSdf;
-    private volatile int timerLength;
+    private volatile int stopwatchLength;
     private boolean isPaused = true;
     private volatile String formattedDiff;
     private volatile String notifFormattedDiff;
     private ScheduledExecutorService scheduledExecutorService;
     private SetTextsRunnable setTextsRunnable;
-    private TimerRunnable timerRunnable;
-    private Date timerDate;
+    private StopwatchRunnable stopwatchRunnable;
+    private Date stopwatchDate;
     private Handler mainHandler;
     private Context context;
     private ServiceListener serviceListener;
 
     @SuppressLint("SimpleDateFormat")
-    Timer(Context context, ServiceListener listener) {
+    Stopwatch(Context context, ServiceListener listener) {
         serviceListener = listener;
         scheduledExecutorService = Executors.newScheduledThreadPool(1);
         mainHandler = new Handler();
         this.context = context;
-        sdf = new SimpleDateFormat(context.getResources().getString(R.string.timer_format_1));
-        notifSdf = new SimpleDateFormat(context.getResources().getString(R.string.timer_format_notif));
+        sdf = new SimpleDateFormat(context.getResources().getString(R.string.stopwatch_format_1));
+        notifSdf = new SimpleDateFormat(context.getResources().getString(R.string.stopwatch_format_notif));
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         notifSdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        timerDate = new Date();
+        stopwatchDate = new Date();
         setTextsRunnable = new SetTextsRunnable();
-        timerRunnable = new TimerRunnable();
+        stopwatchRunnable = new StopwatchRunnable();
     }
 
     void initialize() {
@@ -77,25 +77,25 @@ public class Timer {
 
     private void resetState() {
         diff = 0L;
-        formattedDiff = context.getResources().getString(R.string.timer_initial_text);
-        timerLength = 0;
-        sdf.applyPattern(context.getString(R.string.timer_format_1));
-        notifSdf.applyPattern(context.getString(R.string.timer_format_notif));
+        formattedDiff = context.getResources().getString(R.string.stopwatch_initial_text);
+        stopwatchLength = 0;
+        sdf.applyPattern(context.getString(R.string.stopwatch_format_1));
+        notifSdf.applyPattern(context.getString(R.string.stopwatch_format_notif));
     }
 
-    void pauseResumeTimer() {
+    void pauseResumeStopwatch() {
         if (isPaused) {
             if (initialTime == 0L) {
                 initialTime = SystemClock.elapsedRealtime();
                 timeHandle = scheduledExecutorService
-                        .scheduleAtFixedRate(timerRunnable, 0, INTERVAL,
+                        .scheduleAtFixedRate(stopwatchRunnable, 0, INTERVAL,
                                 TimeUnit.MILLISECONDS);
 
                 isPaused = false;
             } else {
                 initialTime = SystemClock.elapsedRealtime() - diff;
                 timeHandle = scheduledExecutorService
-                        .scheduleAtFixedRate(timerRunnable, 0,
+                        .scheduleAtFixedRate(stopwatchRunnable, 0,
                                 INTERVAL, TimeUnit.MILLISECONDS);
 
                 isPaused = false;
@@ -108,7 +108,7 @@ public class Timer {
         }
     }
 
-    void stopTimer() {
+    void stopStopwatch() {
         if (timeHandle != null && !timeHandle.isCancelled())
             timeHandle.cancel(true);
         isPaused = true;
@@ -117,25 +117,25 @@ public class Timer {
     }
 
 
-    private void applyTimerPattern() {
-        if (timerLength == 1 && diff > 2750000) {
-            sdf.applyPattern(context.getString(R.string.timer_format_3));
-            notifSdf.applyPattern(context.getString(R.string.timer_format_3));
-            timerLength = 2;
-        } else if (timerLength == 0 && diff > 50000) {
-            sdf.applyPattern(context.getResources().getString(R.string.timer_format_2));
-            timerLength = 1;
+    private void applyStopwatchPattern() {
+        if (stopwatchLength == 1 && diff > 2750000) {
+            sdf.applyPattern(context.getString(R.string.stopwatch_format_3));
+            notifSdf.applyPattern(context.getString(R.string.stopwatch_format_3));
+            stopwatchLength = 2;
+        } else if (stopwatchLength == 0 && diff > 50000) {
+            sdf.applyPattern(context.getResources().getString(R.string.stopwatch_format_2));
+            stopwatchLength = 1;
         }
     }
 
-    TimerStatus getStatus() {
-        return new TimerStatus(isPaused, formattedDiff);
+    StopwatchStatus getStatus() {
+        return new StopwatchStatus(isPaused, formattedDiff);
     }
 
     /**
-     * Use to check whether timer is running and/or paused, or if it has been reset
+     * Use to check whether stopwatch is running and/or paused, or if it has been reset
      *
-     * @return True if timer has not been reset
+     * @return True if stopwatch has not been reset
      */
     boolean isRunningOrPaused() {
         return diff > 0;
@@ -153,15 +153,15 @@ public class Timer {
         serviceListener.onUpdateStatus(isPaused, formattedDiff, notifFormattedDiff);
     }
 
-    private class TimerRunnable implements Runnable {
+    private class StopwatchRunnable implements Runnable {
         @Override
         public void run() {
             diff = SystemClock.elapsedRealtime() - initialTime;
-            applyTimerPattern();
+            applyStopwatchPattern();
 
-            timerDate.setTime(diff);
-            formattedDiff = sdf.format(timerDate);
-            notifFormattedDiff = notifSdf.format(timerDate);
+            stopwatchDate.setTime(diff);
+            formattedDiff = sdf.format(stopwatchDate);
+            notifFormattedDiff = notifSdf.format(stopwatchDate);
             mainHandler.post(setTextsRunnable);
         }
     }

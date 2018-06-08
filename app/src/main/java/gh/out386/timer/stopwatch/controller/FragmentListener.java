@@ -1,6 +1,8 @@
-package gh.out386.timer.timer;
+package gh.out386.timer.stopwatch.controller;
 
 /*
+ * Copyright (C) 2018 Ritayan Chakraborty
+ *
  * This file is a part of Timer.
  *
  * Timer is free software: you can redistribute it and/or modify
@@ -16,20 +18,6 @@ package gh.out386.timer.timer;
  * with Timer. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-public class TimerStatus {
-    private boolean isPaused;
-    private String time;
-
-    public TimerStatus(boolean isPaused, String time) {
-        this.isPaused = isPaused;
-        this.time = time;
-    }
-
-    boolean getPaused() {
-        return isPaused;
-    }
-
-    String getTime() {
-        return time;
-    }
+public interface FragmentListener {
+    void onUpdateStatus(boolean isPaused, String time);
 }

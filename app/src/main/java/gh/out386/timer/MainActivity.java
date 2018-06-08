@@ -32,12 +32,12 @@ import com.afollestad.materialdialogs.color.ColorChooserDialog;
 import gh.out386.timer.clock.ClockFragment;
 import gh.out386.timer.customviews.PrefsColourEvaporateTextView;
 import gh.out386.timer.customviews.PrefsColourRelativeLayout;
-import gh.out386.timer.timer.TimerFragment;
-import gh.out386.timer.timer.TimerActivityListener;
+import gh.out386.timer.stopwatch.StopwatchFragment;
+import gh.out386.timer.stopwatch.StopwatchActivityListener;
 
 public class MainActivity extends AppCompatActivity implements ColorChooserDialog.ColorCallback {
 
-    private TimerActivityListener timerFragmentListener;
+    private StopwatchActivityListener timerFragmentListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,15 +56,15 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                 .replace(R.id.clock_container, new ClockFragment())
                 .commit();
         fm.beginTransaction()
-                .replace(R.id.timer_container, new TimerFragment(), TimerFragment.TAG)
+                .replace(R.id.timer_container, new StopwatchFragment(), StopwatchFragment.TAG)
                 .commitNow();
     }
 
     private void getFragmentListener() {
         Fragment timerFragment = (getSupportFragmentManager()
-                .findFragmentByTag(TimerFragment.TAG));
-        if (timerFragment != null && timerFragment instanceof TimerFragment)
-            timerFragmentListener = (TimerActivityListener) timerFragment;
+                .findFragmentByTag(StopwatchFragment.TAG));
+        if (timerFragment != null && timerFragment instanceof StopwatchFragment)
+            timerFragmentListener = (StopwatchActivityListener) timerFragment;
     }
 
     @Override

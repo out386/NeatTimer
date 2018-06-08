@@ -19,7 +19,7 @@
         </activity>
 
         <service
-            android:name=".timer.controller.TimerService"
+            android:name=".stopwatch.controller.StopwatchService"
             android:enabled="true"
             android:exported="true" />
 

@@ -17,7 +17,7 @@
  *
  */
 
-package gh.out386.timer.timer.controller;
+package gh.out386.timer.stopwatch.controller;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -33,15 +33,15 @@ import android.support.v4.content.ContextCompat;
 
 import gh.out386.timer.NotificationActivity;
 import gh.out386.timer.R;
-import gh.out386.timer.timer.TimerStatus;
+import gh.out386.timer.stopwatch.StopwatchStatus;
 
-public class TimerService extends Service implements ServiceListener {
+public class StopwatchService extends Service implements ServiceListener {
 
     public static final String TIMER_PAUSE_RESUME = "TIMER_PAUSE_RESUME";
     public static final String TIMER_RESET = "TIMER_RESET";
 
-    private final IBinder binder = new TimerBinder();
-    private Timer timer;
+    private final IBinder binder = new StopwatchBinder();
+    private Stopwatch stopwatch;
     private FragmentListener fragmentListener;
     private NotificationCompat.Builder notificationBuilder;
     private boolean showNotif;
@@ -52,8 +52,8 @@ public class TimerService extends Service implements ServiceListener {
     public void onCreate() {
         super.onCreate();
         notificationManager = ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE));
-        timer = new Timer(getApplicationContext(), this);
-        timer.initialize();
+        stopwatch = new Stopwatch(getApplicationContext(), this);
+        stopwatch.initialize();
     }
 
     @Override
@@ -61,13 +61,13 @@ public class TimerService extends Service implements ServiceListener {
         String action = intent.getAction();
         if (action != null) {
             if (action.equals(TIMER_PAUSE_RESUME)) {
-                boolean ispaused = timer.getPaused();
+                boolean ispaused = stopwatch.getPaused();
                 setNotifActions(!ispaused);
                 if (showNotif && notificationBuilder != null)
                     notificationManager.notify(1, notificationBuilder.build());
-                timer.pauseResumeTimer();
+                stopwatch.pauseResumeStopwatch();
             } else if (action.equals(TIMER_RESET)) {
-                timer.stopTimer();
+                stopwatch.stopStopwatch();
                 unforgroundify();
                 stopSelf();
             }
@@ -99,24 +99,24 @@ public class TimerService extends Service implements ServiceListener {
         fragmentListener = null;
     }
 
-    public TimerStatus getStatus() {
-        return timer.getStatus();
+    public StopwatchStatus getStatus() {
+        return stopwatch.getStatus();
     }
 
     /**
-     * Use to check if timer is running and/or paused, or if it has been reset
+     * Use to check if stopwatch is running and/or paused, or if it has been reset
      *
-     * @return True if timer is not reset
+     * @return True if stopwatch is not reset
      */
     public boolean isRunningOrPaused() {
-        return timer.isRunningOrPaused();
+        return stopwatch.isRunningOrPaused();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        timer.stopTimer();
-        timer = null;
+        stopwatch.stopStopwatch();
+        stopwatch = null;
     }
 
     public void forgroundify() {
@@ -133,8 +133,8 @@ public class TimerService extends Service implements ServiceListener {
                     .setAutoCancel(false)
                     .setOnlyAlertOnce(true)
                     .setContentIntent(contentIntent)
-                    .setContentText(timer.getTime())
-                    .setSmallIcon(R.drawable.ic_stat_timer)
+                    .setContentText(stopwatch.getTime())
+                    .setSmallIcon(R.drawable.ic_stat_stopwatch)
                     .setColor(ContextCompat.getColor(getApplicationContext(), R.color.colorNotif));
         }
 
@@ -163,7 +163,7 @@ public class TimerService extends Service implements ServiceListener {
     }
 
     private void setNotifActions() {
-        setNotifActions(timer.getPaused());
+        setNotifActions(stopwatch.getPaused());
     }
 
     private void setNotifActions(boolean isPaused) {
@@ -198,9 +198,9 @@ public class TimerService extends Service implements ServiceListener {
         return (PendingIntent.getService(this, 0, i, 0));
     }
 
-    public class TimerBinder extends Binder {
-        public TimerService getService() {
-            return TimerService.this;
+    public class StopwatchBinder extends Binder {
+        public StopwatchService getService() {
+            return StopwatchService.this;
         }
     }
 }
