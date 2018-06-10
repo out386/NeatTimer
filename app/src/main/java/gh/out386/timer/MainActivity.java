@@ -25,10 +25,12 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 
 import com.afollestad.materialdialogs.color.ColorChooserDialog;
 
+import gh.out386.timer.bottomsheet.BottomHolderFragment;
 import gh.out386.timer.clock.ClockFragment;
 import gh.out386.timer.customviews.PrefsColourEvaporateTextView;
 import gh.out386.timer.customviews.PrefsColourRelativeLayout;
@@ -120,7 +122,11 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             if (timerFragmentListener != null)
                 timerFragmentListener.onTapped();
         });
-        container.setOnLongPressListener(() -> showColourDialog(true));
+        container.setOnLongPressListener(() -> {
+            new BottomHolderFragment()
+                    .show(getSupportFragmentManager(), BottomHolderFragment.TAG);
+        });
+                //showColourDialog(true));
     }
 
 }
