@@ -22,7 +22,7 @@ package gh.out386.timer.customviews;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.ColorInt;
+import androidx.annotation.ColorInt;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;

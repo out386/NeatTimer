@@ -7,7 +7,7 @@
 package gh.out386.timer;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 
 public class NotificationActivity extends AppCompatActivity {
