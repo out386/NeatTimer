@@ -27,6 +27,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Switch;
 
 import gh.out386.timer.MainActivity;
@@ -37,13 +38,15 @@ public class SettingsFragment extends Fragment {
     public static final String KEY_SETT_ORIENTATION = "settings_orientation";
 
     private Switch orientationSwitch;
+    private Button colourButton;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        orientationSwitch = v.findViewById(R.id.sw_sett_orientation);
+        orientationSwitch = v.findViewById(R.id.sett_sw_orientation);
+        colourButton = v.findViewById(R.id.sett_bt_color);
 
         setup();
         return v;
@@ -57,6 +60,7 @@ public class SettingsFragment extends Fragment {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mainActivity);
 
         setupOrientation(mainActivity, prefs);
+        setupColour(mainActivity);
     }
 
     private void setupOrientation(MainActivity mainActivity, SharedPreferences prefs) {
@@ -75,6 +79,12 @@ public class SettingsFragment extends Fragment {
                         .apply();
                 mainActivity.changeOrientationSetting(false);
             }
+        });
+    }
+
+    private void setupColour(MainActivity mainActivity) {
+        colourButton.setOnClickListener((view) -> {
+            mainActivity.showColourDialog(true);
         });
     }
 

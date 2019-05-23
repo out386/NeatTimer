@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
         }
     }
 
-    private void showColourDialog(boolean accentMode) {
+    public void showColourDialog(boolean accentMode) {
         int titleRes = accentMode ? R.string.primary : R.string.accent;
         new ColorChooserDialog.Builder(MainActivity.this, titleRes)
                 .accentMode(accentMode)
@@ -145,7 +145,6 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             new BottomHolderFragment()
                     .show(getSupportFragmentManager(), BottomHolderFragment.TAG);
         });
-        //showColourDialog(true));
     }
 
 }

@@ -19,4 +19,5 @@
     <string name="bottom_sheet_settings_label">Settings</string>
     <string name="bottom_sheet_about_label">About</string>
     <string name="settings_orientation">Always auto-rotate</string>
+    <string name="settings_colours">Set colours</string>
 </resources>
