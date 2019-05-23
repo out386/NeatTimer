@@ -35,7 +35,7 @@ import com.afollestad.materialdialogs.color.ColorChooserDialog;
 import gh.out386.timer.bottomsheet.BottomHolderFragment;
 import gh.out386.timer.bottomsheet.SettingsFragment;
 import gh.out386.timer.clock.ClockFragment;
-import gh.out386.timer.customviews.PrefsColourEvaporateTextView;
+import gh.out386.timer.customviews.PrefsColourManager;
 import gh.out386.timer.customviews.PrefsColourRelativeLayout;
 import gh.out386.timer.stopwatch.StopwatchActivityListener;
 import gh.out386.timer.stopwatch.StopwatchFragment;
@@ -115,9 +115,9 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
     @Override
     public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int colour) {
         if (R.string.primary == dialog.getTitle()) {
-            PrefsColourRelativeLayout.setDynamicColour(getApplicationContext(), colour);
+            PrefsColourManager.setPrimaryColour(getApplicationContext(), colour);
         } else if (R.string.accent == dialog.getTitle()) {
-            PrefsColourEvaporateTextView.setDynamicColour(getApplicationContext(), colour);
+            PrefsColourManager.setAccentColour(getApplicationContext(), colour);
         }
     }
 

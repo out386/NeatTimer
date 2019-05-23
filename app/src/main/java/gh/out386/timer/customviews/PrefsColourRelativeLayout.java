@@ -22,7 +22,6 @@ package gh.out386.timer.customviews;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.ColorInt;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -31,16 +30,16 @@ import android.widget.RelativeLayout;
 import gh.out386.timer.customviews.listeners.LongPressListener;
 import gh.out386.timer.customviews.listeners.SingleTapListener;
 
+import static gh.out386.timer.customviews.PrefsColourManager.DEF_COLOUR_PRIMARY;
+import static gh.out386.timer.customviews.PrefsColourManager.COLOR_PREFS_FILE;
+import static gh.out386.timer.customviews.PrefsColourManager.KEY_COLOUR_PRIMARY;
+
 
 /**
  * A subclass of {@link RelativeLayout} that has a {@link SharedPreferences} listener that allows
  * all instances of this class to always have the same persistent {@code backgroundColor}.
  */
 public class PrefsColourRelativeLayout extends RelativeLayout {
-
-    public static final String PREFERENCE_FILE = "viewsColours";
-    public static final String KEY_COLOUR = "rLayoutColor";
-
     private SharedPreferences prefs;
     private ColorListener colourListener;
     private SingleTapListener singleTapListener;
@@ -70,32 +69,17 @@ public class PrefsColourRelativeLayout extends RelativeLayout {
         }
         if (prefs == null) {
             Context context = getContext().getApplicationContext();
-            prefs = context.getSharedPreferences(PREFERENCE_FILE, Context.MODE_PRIVATE);
+            prefs = context.getSharedPreferences(COLOR_PREFS_FILE, Context.MODE_PRIVATE);
         }
         prefs.registerOnSharedPreferenceChangeListener(colourListener);
-        setBackgroundColor(prefs.getInt(KEY_COLOUR, 0x000000));
-    }
-
-    /**
-     * When this method is called, all instances of {@link #PrefsColourRelativeLayout} set their
-     * {@code backgroundColor} to the provided {@code color}. {@link SharedPreferences} is used,
-     * so the colour set here is persistent.
-     *
-     * @param colour The colour all instances of PrefsColourRelativeLayout will use as their
-     *               {@code backgroundColor}
-     */
-    public static void setDynamicColour(Context context, @ColorInt int colour) {
-        context.getSharedPreferences(PREFERENCE_FILE, Context.MODE_PRIVATE)
-                .edit()
-                .putInt(KEY_COLOUR, colour)
-                .apply();
+        setBackgroundColor(prefs.getInt(KEY_COLOUR_PRIMARY, DEF_COLOUR_PRIMARY));
     }
 
     /**
      * Register a callback to be invoked when a single tap event is sent to this view.
      *
-     * @param listener the single tap listener to attach to this view. {@code null} to
-     *                 unset the listener.
+     * @param listener the single tap listener to attach to this view. {@code null} to unset the
+     *                 listener.
      */
     @SuppressLint("ClickableViewAccessibility")
     public void setOnSingleTapListener(SingleTapListener listener) {
@@ -114,8 +98,8 @@ public class PrefsColourRelativeLayout extends RelativeLayout {
     /**
      * Register a callback to be invoked when a long press event is sent to this view.
      *
-     * @param listener the long press listener to attach to this view. {@code null} to
-     *                 unset the listener.
+     * @param listener the long press listener to attach to this view. {@code null} to unset the
+     *                 listener.
      */
     @SuppressLint("ClickableViewAccessibility")
     public void setOnLongPressListener(LongPressListener listener) {
@@ -134,8 +118,8 @@ public class PrefsColourRelativeLayout extends RelativeLayout {
     private class ColorListener implements SharedPreferences.OnSharedPreferenceChangeListener {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if (key.equals(KEY_COLOUR)) {
-                setBackgroundColor(sharedPreferences.getInt(KEY_COLOUR, 0x000000));
+            if (key.equals(KEY_COLOUR_PRIMARY)) {
+                setBackgroundColor(sharedPreferences.getInt(KEY_COLOUR_PRIMARY, DEF_COLOUR_PRIMARY));
             }
         }
     }

@@ -22,7 +22,6 @@ package gh.out386.timer.customviews;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.ColorInt;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -33,15 +32,16 @@ import gh.out386.timer.FontManager;
 import gh.out386.timer.customviews.listeners.LongPressListener;
 import gh.out386.timer.customviews.listeners.SingleTapListener;
 
+import static gh.out386.timer.customviews.PrefsColourManager.COLOR_PREFS_FILE;
+import static gh.out386.timer.customviews.PrefsColourManager.DEF_COLOUR_ACCENT;
+import static gh.out386.timer.customviews.PrefsColourManager.KEY_COLOUR_ACCENT;
+
 /**
- * A subclass of {@link EvaporateTextView} that uses a custom font and has a
- * {@link SharedPreferences} listener that allows all instances of this class to always have the
- * same persistent {@code textColor}.
+ * A subclass of {@link EvaporateTextView} that uses a custom font and has a {@link
+ * SharedPreferences} listener that allows all instances of this class to always have the same
+ * persistent {@code textColor}.
  */
 public class PrefsColourEvaporateTextView extends EvaporateTextView {
-    public static final String PREFERENCE_FILE = "viewsColours";
-    public static final String KEY_COLOUR = "hTextColor";
-
     private SharedPreferences prefs;
     private ColorListener colourListener;
     private SingleTapListener singleTapListener;
@@ -75,10 +75,10 @@ public class PrefsColourEvaporateTextView extends EvaporateTextView {
         }
         if (prefs == null) {
             Context context = getContext().getApplicationContext();
-            prefs = context.getSharedPreferences(PREFERENCE_FILE, Context.MODE_PRIVATE);
+            prefs = context.getSharedPreferences(COLOR_PREFS_FILE, Context.MODE_PRIVATE);
         }
         prefs.registerOnSharedPreferenceChangeListener(colourListener);
-        setColour(prefs.getInt(KEY_COLOUR, 0x000000));
+        setColour(prefs.getInt(KEY_COLOUR_ACCENT, DEF_COLOUR_ACCENT));
     }
 
     private void setColour(int colour) {
@@ -88,25 +88,10 @@ public class PrefsColourEvaporateTextView extends EvaporateTextView {
     }
 
     /**
-     * When this method is called, all instances of {@link #PrefsColourEvaporateTextView} set their
-     * {@code TextColor} to the provided {@code color}. {@link SharedPreferences} is used, so the
-     * colour set here is persistent.
-     *
-     * @param colour The colour all instances of PrefsColourEvaporateTextView will use as their
-     *               {@code TextColor}
-     */
-    public static void setDynamicColour(Context context, @ColorInt int colour) {
-        context.getSharedPreferences(PREFERENCE_FILE, Context.MODE_PRIVATE)
-                .edit()
-                .putInt(KEY_COLOUR, colour)
-                .apply();
-    }
-
-    /**
      * Register a callback to be invoked when a single tap event is sent to this view.
      *
-     * @param listener the single tap listener to attach to this view. {@code null} to
-     *                 unset the listener.
+     * @param listener the single tap listener to attach to this view. {@code null} to unset the
+     *                 listener.
      */
     @SuppressLint("ClickableViewAccessibility")
     public void setOnSingleTapListener(SingleTapListener listener) {
@@ -125,8 +110,8 @@ public class PrefsColourEvaporateTextView extends EvaporateTextView {
     /**
      * Register a callback to be invoked when a long press event is sent to this view.
      *
-     * @param listener the long press listener to attach to this view. {@code null} to
-     *                 unset the listener.
+     * @param listener the long press listener to attach to this view. {@code null} to unset the
+     *                 listener.
      */
     @SuppressLint("ClickableViewAccessibility")
     public void setOnLongPressListener(LongPressListener listener) {
@@ -145,8 +130,8 @@ public class PrefsColourEvaporateTextView extends EvaporateTextView {
     private class ColorListener implements SharedPreferences.OnSharedPreferenceChangeListener {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if (key.equals(KEY_COLOUR)) {
-                setColour(sharedPreferences.getInt(KEY_COLOUR, 0x000000));
+            if (key.equals(KEY_COLOUR_ACCENT)) {
+                setColour(sharedPreferences.getInt(KEY_COLOUR_ACCENT, DEF_COLOUR_ACCENT));
             }
         }
     }
