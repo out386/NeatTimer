@@ -7,4 +7,8 @@
         <item name="android:windowContentOverlay">@null</item>
     </style>
 
+    <style name="SettingsText" parent="TextAppearance.AppCompat.Subhead">
+
+    </style>
+
 </resources>

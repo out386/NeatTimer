@@ -19,23 +19,26 @@
 
 package gh.out386.timer;
 
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 
 import com.afollestad.materialdialogs.color.ColorChooserDialog;
 
 import gh.out386.timer.bottomsheet.BottomHolderFragment;
+import gh.out386.timer.bottomsheet.SettingsFragment;
 import gh.out386.timer.clock.ClockFragment;
 import gh.out386.timer.customviews.PrefsColourEvaporateTextView;
 import gh.out386.timer.customviews.PrefsColourRelativeLayout;
-import gh.out386.timer.stopwatch.StopwatchFragment;
 import gh.out386.timer.stopwatch.StopwatchActivityListener;
+import gh.out386.timer.stopwatch.StopwatchFragment;
 
 public class MainActivity extends AppCompatActivity implements ColorChooserDialog.ColorCallback {
 
@@ -43,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setupOrientation();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
@@ -50,6 +54,14 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             showFragments();
         getFragmentListener();
         setViewListeners();
+    }
+
+    private void setupOrientation() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (prefs.getBoolean(SettingsFragment.KEY_SETT_ORIENTATION, true))
+            changeOrientationSetting(true);
+        else
+            changeOrientationSetting(false);
     }
 
     private void showFragments() {
@@ -93,6 +105,13 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
                                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
+    public void changeOrientationSetting(boolean autoRotate) {
+        if (autoRotate)
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        else
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+    }
+
     @Override
     public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int colour) {
         if (R.string.primary == dialog.getTitle()) {
@@ -126,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements ColorChooserDialo
             new BottomHolderFragment()
                     .show(getSupportFragmentManager(), BottomHolderFragment.TAG);
         });
-                //showColourDialog(true));
+        //showColourDialog(true));
     }
 
 }
