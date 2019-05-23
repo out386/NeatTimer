@@ -23,7 +23,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialogFragment;
-import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -35,6 +34,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import gh.out386.timer.R;
+import gh.out386.timer.customviews.PrefsColourTabLayout;
 
 public class BottomHolderFragment extends BottomSheetDialogFragment {
 
@@ -44,7 +44,7 @@ public class BottomHolderFragment extends BottomSheetDialogFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_bottom_sheet, container);
-        TabLayout tab = root.findViewById(R.id.bottomPagerTab);
+        PrefsColourTabLayout tab = root.findViewById(R.id.bottomPagerTab);
         ViewPager pager = root.findViewById(R.id.bottomPager);
         pager.setAdapter(new PagerAdapter(getChildFragmentManager()));
         tab.setupWithViewPager(pager);

@@ -28,6 +28,7 @@ public class PrefsColourManager {
     static final String KEY_COLOUR_PRIMARY = "primaryColor";
     static final int DEF_COLOUR_ACCENT = 0xFF000000;
     static final int DEF_COLOUR_PRIMARY = 0xFFFFFFFF;
+    static final double LIGHT_TEXT_LUM_THRESH = 0.40;
 
     /**
      * When this method is called, all instances of all {@code PrefsColour*} views set their primary

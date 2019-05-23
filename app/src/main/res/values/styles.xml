@@ -8,7 +8,16 @@
     </style>
 
     <style name="SettingsText" parent="TextAppearance.AppCompat.Subhead">
+        <item name="android:textColor">@color/text_dark</item>
+    </style>
 
+    <style name="TabDark" parent="Widget.Design.TabLayout">
+        <item name="tabSelectedTextColor">@color/text_dark</item>
+        <item name="tabTextAppearance">@style/TabTextDark</item>
+    </style>
+
+    <style name="TabTextDark" parent="TextAppearance.Design.Tab">
+        <item name="android:textColor">@color/text_dark</item>
     </style>
 
 </resources>

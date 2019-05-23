@@ -27,18 +27,18 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.Switch;
 
 import gh.out386.timer.MainActivity;
 import gh.out386.timer.R;
+import gh.out386.timer.customviews.PrefsColourButton;
+import gh.out386.timer.customviews.PrefsColourSwitch;
 
 public class SettingsFragment extends Fragment {
 
     public static final String KEY_SETT_ORIENTATION = "settings_orientation";
 
-    private Switch orientationSwitch;
-    private Button colourButton;
+    private PrefsColourSwitch orientationSwitch;
+    private PrefsColourButton colourButton;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
